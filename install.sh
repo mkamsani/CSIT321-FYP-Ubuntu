@@ -7,11 +7,8 @@
 # https://ubuntu.com/download/server
 #
 
-#echo () { printf "%s\n" "$*" ; }
-fail() {
-  echo "$*"
-  exit 1
-}
+echo () { printf "%s\n" "$*" ; }
+fail () { echo "$*";   exit 1; }
 
 [ "$(id -u)" = "0" ] && fail "Do not run this script as root."
 export echo
