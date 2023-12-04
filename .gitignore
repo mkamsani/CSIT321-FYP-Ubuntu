@@ -1,0 +1,13 @@
+slidev/node_modules
+slidev/.DS_Store
+slidev/dist
+slidev/*.local
+slidev/index.html
+slidev/.remote-assets
+slidev/components.d.ts
+.idea/shelf/
+.idea/workspace.xml
+.idea/httpRequests/
+.idea/dataSources/
+.idea/dataSources.local.xml
+driver.sh

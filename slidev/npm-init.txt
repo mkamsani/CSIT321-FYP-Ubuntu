@@ -1,0 +1,44 @@
+% npm init slidev@latest
+Need to install the following packages:
+create-slidev@0.44.0
+Ok to proceed? (y) y
+
+  ●■▲
+  Slidev Creator  v0.44.0
+
+✔ Project name: … slidev
+  Scaffolding project in slidev ...
+  Done.
+
+✔ Install and start it now? … yes
+✔ Choose the agent › npm
+
+added 642 packages, and audited 643 packages in 1m
+
+212 packages are looking for funding
+  run `npm fund` for details
+
+3 moderate severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> dev
+> slidev --open
+
+
+
+  ●■▲
+  Slidev  v0.44.0 
+
+  theme       @slidev/theme-seriph
+  css engine  unocss
+  entry       /home/user/repository/git/CSIT321-FYP-Nix/Ubuntu/slidev/slidev/slides.md
+
+  public slide show   > http://localhost:3030/
+  presenter mode      > http://localhost:3030/presenter/
+  remote control      > pass --remote to enable
+
+  shortcuts           > restart | open | edit | quit
