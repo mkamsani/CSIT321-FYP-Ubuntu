@@ -117,7 +117,7 @@ sudo systemctl disable --now docker.service docker.socket
 sudo systemctl enable --now docker.service docker.socket
 
 # Handle required updates/restarts.
-sudo DEBIAN_FRONTEND=noninteractive apt-get update -y -qq --no-install-recommends ubuntu-advantage-tools
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq --no-install-recommends ubuntu-advantage-tools
 sudo systemctl restart dbus.service                  # NEEDRESTART-SVC: dbus.service               
 sudo systemctl restart ModemManager.service          # NEEDRESTART-SVC: ModemManager.service       
 sudo systemctl restart networkd-dispatcher.service   # NEEDRESTART-SVC: networkd-dispatcher.service
