@@ -8,12 +8,11 @@ set -eux
 # https://ubuntu.com/download/server
 #
 
-echo () { printf "%s\n" "$*" ; }
-fail () { echo "$*";   exit 1; }
-
-[ "$(id -u)" = "0" ] && fail "Do not run this script as root."
+echo() { printf "%s\n" "$*";  }
+fail() { echo "$*";   exit 1; }
 export echo
 export fail
+
 [ "$(id -u)" = "0" ] && fail "Do not run this script as root."
 [ "$(readlink /proc/$$/exe)" != "/usr/bin/dash" ] && fail "Pipe this script to \`sh\` or /usr/bin/dash."
 echo "Defaults timestamp_timeout=60" | sudo tee -a /etc/sudoers
@@ -21,7 +20,7 @@ cd "$(mktemp -d)" || fail "Could not cd to temporary directory."
 cp ~/.profile ~/.profile.bak
 
 # Update apt sources, install fetch packages.
-sudo DEBIAN_FRONTEND=noninteractive apt-get update  -y -qq
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -y -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apt-transport-https ca-certificates curl git gnupg gpg wget
 
@@ -104,9 +103,9 @@ echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.co
 DOCKER_PACKAGES='docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras'
 # Install apt packages.
 sudo DEBIAN_FRONTEND=noninteractive apt-get update -y -qq
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y jq unzip zip zsh
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y shellcheck jq unzip zip zsh
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  code helix $DOCKER_PACKAGES nodejs python3-venv python3-pip 
+  code helix $DOCKER_PACKAGES nodejs python3-venv python3-pip libffi-dev libssl-dev
 
 # Change npm global packages to user directory.
 mkdir ~/.npm-global && npm config set prefix ~/.npm-global
@@ -128,7 +127,7 @@ sudo systemctl restart systemd-logind.service      # NEEDRESTART-SVC: systemd-lo
 sudo /etc/needrestart/restart.d/systemd-manager    # NEEDRESTART-SVC: systemd-manager
 sudo systemctl restart udisks2.service             # NEEDRESTART-SVC: udisks2.service
 sudo systemctl restart unattended-upgrades.service # NEEDRESTART-SVC: unattended-upgrades.service
-# sudo systemctl restart user@1000.service             # NEEDRESTART-SVC: user@1000.service
+# sudo systemctl restart user@1000.service         # NEEDRESTART-SVC: user@1000.service
 
 # Install Go.
 _GOVERSION=go1.21.4
@@ -151,13 +150,49 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup_init.sh && c
 # Install build-essential (C/C++ development tools).
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential
 # Add convenience binaries:
+user_home=$HOME
+user_name=$(whoami)
+MKTEMP=$(mktemp -d)
 # Cosmopolitan C/C++ Compiler.
-sudo mkdir -p ~/.local/lib/cosmocc
-wget https://cosmo.zip/pub/cosmocc/cosmocc.zip -O /tmp/cosmocc.zip
-unzip /tmp/cosmocc.zip -d ~/.local/lib/cosmocc
-ln -s ~/.local/lib/cosmocc/bin/cosmocc ~/.local/bin/cosmocc
+mkdir -p ~/.local/lib/cosmocc
+wget https://cosmo.zip/pub/cosmocc/cosmocc.zip -O $MKTEMP/cosmocc.zip
+sudo unzip $MKTEMP/cosmocc.zip -d "$user_home/.local/lib/cosmocc"
+# Blink
+git clone https://github.com/jart/blink $MKTEMP/blink && cd $MKTEMP/blink
+./configure && make -j8 && sudo make install
 # QuickJS.
-wget https://cosmo.zip/pub/cosmos/bin/qjs -O ~/.local/bin/qjs
+sudo wget https://cosmo.zip/pub/cosmos/bin/qjs -O ~/.local/bin/qjs
+# User own and link to bin folder.
+sudo chown -R "$user_name:$user_name" "$user_home/.local"
+ln -s ~/.local/lib/cosmocc/bin/cosmocc ~/.local/bin/cosmocc
+chmod 770 ~/.local/bin/qjs
+
+# For zsh, wrap around qjs around bash (it doesn't work otherwise).
+printf "%s\n" 'qjs () { /usr/bin/bash -c "qjs $*" ; }' >>~/.config/zsh/.zprofile
+echo 'export qjs' >>~/.config/zsh/.zprofile
+
+# Add Pip packages.
+mkdir -p ~/.local/lib/virtualenv
+python3 -m venv ~/.local/lib/virtualenv
+. ~/.local/lib/virtualenv/bin/activate
+python3 -m pip install wheel
+# Add wormhole (for transferring files between computers).
+python3 -m pip install magic-wormhole
+ln -s ~/.local/lib/virtualenv/bin/wormhole ~/.local/bin/wormhole
+deactivate
+# How to use this:
+# In your host and guest machine, cd to ~/.ssh folder and run the following for each file:
+# PUBLIC KEY:
+#   `wormhole send id_rsa.pub`. # Host machine, look at the message for the passphrase.
+#   `wormhole receive` # Guest machine (VM), use the passphrase from the host machine.
+#   `chmod 664 id_rsa.pub` # Make the public key readable.      
+# PRIVATE KEY:
+#   `wormhole send id_rsa` # Host machine, look at the message for the passphrase.
+#   `wormhole receive` # Guest machine (VM), use the passphrase from the host machine.
+#   `chmod 600 id_rsa` # Make the private key readable only by the owner.
+# Next, start the agent:
+#   eval `ssh-agent` && ssh-add ~/.ssh/id_rsa
+#   Enter key passphrase (one time only, while the agent is running)
 
 # VSCode extensions.
 code --install-extension astro-build.astro-vscode
@@ -170,7 +205,7 @@ code --install-extension esbenp.prettier-vscode
 code --install-extension github.copilot
 code --install-extension github.copilot-chat
 code --install-extension github.vscode-pull-request-github
-code --install-extension hyperledger-fabric-debugger.spydra
+code --install-extension spydra.hyperledger-fabric-debugger
 code --install-extension jebbs.plantuml
 code --install-extension ms-azuretools.vscode-docker
 code --install-extension ms-python.python
@@ -222,6 +257,10 @@ zstyle ':completion:*' rehash true
 EOF
 echo 'source ~/.profile' >>~/.config/zsh/.zprofile
 curl -o ~/.config/zsh/.p10k.zsh https://raw.githubusercontent.com/mkamsani/CSIT321-FYP-Ubuntu/main/.p10k.zsh
+sudo usermod -s /usr/bin/zsh "$(getent passwd 1000 | cut -d: -f1)"
+ln -s ~/.config/zsh/.zshrc ~/.zshrc
+ln -s ~/.config/zsh/.zprofile ~/.zprofile
+ln -s ~/.config/zsh/.zsh_history ~/.zsh_history
 
 sudo sed -i '$d' /etc/sudoers
 exit 0
