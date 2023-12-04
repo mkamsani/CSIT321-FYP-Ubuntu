@@ -20,7 +20,7 @@ cd "$(mktemp -d)" || fail "Could not cd to temporary directory."
 cp ~/.profile ~/.profile.bak
 
 # Update apt sources, install fetch packages.
-sudo DEBIAN_FRONTEND=noninteractive apt-get update -y  -qq
+sudo DEBIAN_FRONTEND=noninteractive apt-get update  -y -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq apt-transport-https ca-certificates curl git gnupg gpg wget
 
@@ -108,6 +108,9 @@ echo 'VERY LONG COMMAND'
 
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   code helix $DOCKER_PACKAGES nodejs python3-venv python3-pip 
+
+mkdir ~/.npm-global
+npm config set prefix "$HOME/.npm-global"
 
 # Enable Docker.
 sudo systemctl disable --now docker.service docker.socket
