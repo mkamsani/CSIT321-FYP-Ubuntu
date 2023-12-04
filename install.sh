@@ -1,5 +1,6 @@
-#!/bin/sh -eux
+#!/bin/sh
 # shellcheck shell=dash
+set -eux
 
 #
 # Non-interactive Ubuntu 22.04.3 LTS installation.
