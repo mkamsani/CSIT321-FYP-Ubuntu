@@ -14,7 +14,8 @@ fail () { echo "$*";   exit 1; }
 [ "$(id -u)" = "0" ] && fail "Do not run this script as root."
 export echo
 export fail
-export source_patch
+[ "$(id -u)" = "0" ] && fail "Do not run this script as root."
+[ "$(readlink /proc/$$/exe)" != "/usr/bin/dash" ] && fail "Pipe this script to \`sh\` or /usr/bin/dash."
 echo "Defaults timestamp_timeout=60" | sudo tee -a /etc/sudoers
 cd "$(mktemp -d)" || fail "Could not cd to temporary directory."
 cp ~/.profile ~/.profile.bak
@@ -103,14 +104,12 @@ echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.co
 DOCKER_PACKAGES='docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras'
 # Install apt packages.
 sudo DEBIAN_FRONTEND=noninteractive apt-get update -y -qq
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y jq zsh
-echo 'VERY LONG COMMAND'
-
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y jq unzip zip zsh
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   code helix $DOCKER_PACKAGES nodejs python3-venv python3-pip 
 
-mkdir ~/.npm-global
-npm config set prefix "$HOME/.npm-global"
+# Change npm global packages to user directory.
+mkdir ~/.npm-global && npm config set prefix ~/.npm-global
 
 # Enable Docker.
 sudo systemctl disable --now docker.service docker.socket
@@ -119,17 +118,17 @@ sudo systemctl enable --now docker.service docker.socket
 
 # Handle required updates/restarts.
 sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq --no-install-recommends ubuntu-advantage-tools
-sudo systemctl restart dbus.service                  # NEEDRESTART-SVC: dbus.service               
-sudo systemctl restart ModemManager.service          # NEEDRESTART-SVC: ModemManager.service       
-sudo systemctl restart networkd-dispatcher.service   # NEEDRESTART-SVC: networkd-dispatcher.service
-sudo systemctl restart packagekit.service            # NEEDRESTART-SVC: packagekit.service         
-sudo systemctl restart polkit.service                # NEEDRESTART-SVC: polkit.service             
-sudo systemctl restart ssh.service                   # NEEDRESTART-SVC: ssh.service                
-sudo systemctl restart systemd-logind.service        # NEEDRESTART-SVC: systemd-logind.service     
-sudo /etc/needrestart/restart.d/systemd-manager      # NEEDRESTART-SVC: systemd-manager            
-sudo systemctl restart udisks2.service               # NEEDRESTART-SVC: udisks2.service            
-sudo systemctl restart unattended-upgrades.service   # NEEDRESTART-SVC: unattended-upgrades.service
-sudo systemctl restart user@1000.service             # NEEDRESTART-SVC: user@1000.service          
+sudo systemctl restart dbus.service                # NEEDRESTART-SVC: dbus.service
+sudo systemctl restart ModemManager.service        # NEEDRESTART-SVC: ModemManager.service
+sudo systemctl restart networkd-dispatcher.service # NEEDRESTART-SVC: networkd-dispatcher.service
+sudo systemctl restart packagekit.service          # NEEDRESTART-SVC: packagekit.service
+sudo systemctl restart polkit.service              # NEEDRESTART-SVC: polkit.service
+sudo systemctl restart ssh.service                 # NEEDRESTART-SVC: ssh.service
+sudo systemctl restart systemd-logind.service      # NEEDRESTART-SVC: systemd-logind.service
+sudo /etc/needrestart/restart.d/systemd-manager    # NEEDRESTART-SVC: systemd-manager
+sudo systemctl restart udisks2.service             # NEEDRESTART-SVC: udisks2.service
+sudo systemctl restart unattended-upgrades.service # NEEDRESTART-SVC: unattended-upgrades.service
+# sudo systemctl restart user@1000.service             # NEEDRESTART-SVC: user@1000.service
 
 # Install Go.
 _GOVERSION=go1.21.4
@@ -142,11 +141,45 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup_init.sh && c
 # Update the default .profile with required environment variables.
 # shellcheck disable=SC2016
 {
-  echo 'export PATH="$PATH:/usr/local/go/bin"' ; # Go.
-  echo 'export PATH="$HOME/.cargo/bin:$PATH"'  ; # Rust.
-  echo 'export PATH="$HOME/.local/bin:$PATH"'  ; # User-installed binaries come first.
+  echo 'export PATH="$PATH:/usr/local/go/bin"'     # Go.
+  echo 'export PATH="$HOME/.cargo/bin:$PATH"'      # Rust.
+  echo 'export PATH="$HOME/.npm-global/bin:$PATH"' # Node.js.
+  echo 'export PATH="$HOME/.local/bin:$PATH"'      # User-installed binaries come first.
 } >>~/.profile
 . ~/.profile
+
+# Install build-essential (C/C++ development tools).
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential
+# Add convenience binaries:
+# Cosmopolitan C/C++ Compiler.
+sudo mkdir -p ~/.local/lib/cosmocc
+wget https://cosmo.zip/pub/cosmocc/cosmocc.zip -O /tmp/cosmocc.zip
+unzip /tmp/cosmocc.zip -d ~/.local/lib/cosmocc
+ln -s ~/.local/lib/cosmocc/bin/cosmocc ~/.local/bin/cosmocc
+# QuickJS.
+wget https://cosmo.zip/pub/cosmos/bin/qjs -O ~/.local/bin/qjs
+
+# VSCode extensions.
+code --install-extension astro-build.astro-vscode
+code --install-extension bierner.markdown-mermaid
+code --install-extension christian-kohler.npm-intellisense
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension donjayamanne.githistory
+code --install-extension editorconfig.editorconfig
+code --install-extension esbenp.prettier-vscode
+code --install-extension github.copilot
+code --install-extension github.copilot-chat
+code --install-extension github.vscode-pull-request-github
+code --install-extension hyperledger-fabric-debugger.spydra
+code --install-extension jebbs.plantuml
+code --install-extension ms-azuretools.vscode-docker
+code --install-extension ms-python.python
+code --install-extension ms-python.vscode-pylance
+code --install-extension ms-vscode-remote.remote-containers
+code --install-extension ms-vscode.cpptools
+code --install-extension ms-vscode.makefile-tools
+code --install-extension redhat.vscode-yaml
+code --install-extension vscode-icons-team.vscode-icons
 
 # Configure Git.
 git config --global user.name "$(whoami)"
