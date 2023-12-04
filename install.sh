@@ -39,9 +39,9 @@ mkdir -p \
 # Create required files.
 touch \
   ~/.config/git/config \
-  ~/.config/zsh/.zshrc \
-  ~/.config/zsh/.zprofile \
-  ~/.config/zsh/.zsh_history \
+  ~/.zshrc \
+  ~/.zprofile \
+  ~/.zsh_history \
   ~/.config/helix/config.toml
 
 # Update the default .profile with required environment variables.
@@ -158,7 +158,7 @@ git config --global core.longpaths true # https://hyperledger-fabric.readthedocs
 
 # Configure zsh.
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k
-cat >>~/.config/zsh/.zshrc <<EOF
+cat >>~/.zshrc <<EOF
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 alias ls='ls -AF --color=auto'
 alias recent='ls -ltch'
@@ -183,8 +183,8 @@ zstyle ':completion::complete:*' use-cache 1
 zstyle ':completion:*:descriptions' format '%U%F{cyan}%d%f%u'
 zstyle ':completion:*' rehash true
 EOF
-echo 'source ~/.profile' >>~/.config/zsh/.zprofile
-curl -o ~/.config/zsh/.p10k.zsh https://raw.githubusercontent.com/mkamsani/CSIT321-FYP-Ubuntu/main/.p10k.zsh
+echo 'source ~/.profile' >>~/.zprofile
+curl -o ~/.p10k.zsh https://raw.githubusercontent.com/mkamsani/CSIT321-FYP-Ubuntu/main/.p10k.zsh
 
 sudo sed -i '$d' /etc/sudoers
 exit 0
