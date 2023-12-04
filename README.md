@@ -119,6 +119,6 @@ DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq curl git wget
 ### Rest of script
 
 ```sh
-wget -qO- https://raw.githubusercontent.com/mkamsani/CSIT321-FYP-Ubuntu/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/mkamsani/CSIT321-FYP-Ubuntu/main/install.sh | sh
 ```
 
